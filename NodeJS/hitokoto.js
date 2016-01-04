@@ -15,8 +15,7 @@ function parseHitokoto(str) {
     var pattern = /hitokoto\((\{.+\})\)/;
     try {
         var obj = JSON.parse(str.match(pattern)[1]);
-        console.log(obj);
-        return '<script>document.write("' + obj.hitokoto + '");</script>';
+        return '<script>document.write("' + obj.hitokoto + '");</script>';//maybe need encode
     } catch (e) {
         console.error(e);
     }
@@ -40,6 +39,7 @@ var server = http.createServer(function (req, res) {
             })
             res.end(parseHitokoto(body));
         })
+        //haven't catch errors
     });
 });
 
