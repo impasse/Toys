@@ -26,7 +26,8 @@ function parseHitokoto(str) {
 var server = http.createServer(function (req, res) {
     http.get('http://api.hitokoto.us/rand?encode=jsc&fun=hitokoto', function (conn) {
         if (conn.statusCode != 200) {
-            conn.throw(404);
+            conn.writeHead(404);
+            res.end();
         }
         var buffers = []
         conn.on('data', function (chunk) {
