@@ -1,0 +1,15 @@
+[Unit]
+Description=Proxy By Golang
+After=network.target remote-fs.target
+
+[Service]
+Type=simple
+User=root
+
+ExecStart=/srv/go/proxy
+ExecReload=kill $MAINPID && /srv/go/proxy
+Restart=always
+ExecStop=kill $MAINPID
+
+[Install]
+WantedBy=multi-user.target
