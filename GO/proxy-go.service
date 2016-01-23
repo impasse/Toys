@@ -4,7 +4,7 @@ After=network.target remote-fs.target
 
 [Service]
 Type=simple
-User=root
+User=http
 
 ExecStart=/srv/go/proxy
 ExecReload=kill $MAINPID && /srv/go/proxy

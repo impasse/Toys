@@ -39,7 +39,7 @@ func proxyHandle(resw http.ResponseWriter, req *http.Request) {
 
 	reqHeader := http.Header{
 		"Accept":          {"image/*"},
-		"Accept-Encoding": {"gzip,deflate,sdcn"},
+		"Accept-Encoding": {"gzip,deflate"},
 		"Host":            {reqURL.Host},
 		"Referer":         {reqURL.String()},
 		"User-Agent":      {req.Header.Get("User-Agent")}}
@@ -58,6 +58,7 @@ func proxyHandle(resw http.ResponseWriter, req *http.Request) {
 				header.Add(key, value)
 			}
 		}
+		defer requestRes.Body.Close()
 		copyBuffer(resw, requestRes.Body)
 	} else {
 		panic(requestRes.StatusCode)
