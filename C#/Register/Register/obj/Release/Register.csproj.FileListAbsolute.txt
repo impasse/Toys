@@ -1,0 +1,8 @@
+c:\users\shyling\documents\visual studio 2015\Projects\Register\Register\bin\Release\Register.exe.config
+c:\users\shyling\documents\visual studio 2015\Projects\Register\Register\bin\Release\Register.exe
+c:\users\shyling\documents\visual studio 2015\Projects\Register\Register\bin\Release\Register.pdb
+c:\users\shyling\documents\visual studio 2015\Projects\Register\Register\obj\Release\Register.Register.resources
+c:\users\shyling\documents\visual studio 2015\Projects\Register\Register\obj\Release\Register.Properties.Resources.resources
+c:\users\shyling\documents\visual studio 2015\Projects\Register\Register\obj\Release\Register.csproj.GenerateResource.Cache
+c:\users\shyling\documents\visual studio 2015\Projects\Register\Register\obj\Release\Register.exe
+c:\users\shyling\documents\visual studio 2015\Projects\Register\Register\obj\Release\Register.pdb
