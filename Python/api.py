@@ -1,6 +1,5 @@
 #!/usr/bin/python2
-# -*- encoding=utf-8 -*-
-from __future__ import unicode_literals
+#encoding=utf-8
 from meinheld import server
 from flask import request, Flask, make_response, Response
 import json
@@ -83,7 +82,7 @@ def jsonp(func):
         if isinstance(content, Response):
             return content
         if callback:
-            content = Response("%s(%s)" % (callback, json.dumps(content, ensure_ascii=False)),
+            content = Response("{0}({1})".format(callback, json.dumps(content, ensure_ascii=False)),
                                mimetype='application/javascript')
         else:
             content = Response(
