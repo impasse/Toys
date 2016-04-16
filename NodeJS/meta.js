@@ -92,7 +92,7 @@ function Model(model) {
                             break;
                         case 'create':
                             target[name] = function(data) {
-                                var row = Object.assign(Object.create(base_fields),data);
+                                var row = Object.assign(Object.assign({},base_fields),data);
                                 return db.query(`INSERT INTO ${table_name} (${R.keys(row).join(',')}) VALUES(${R.values(row).map(_=>`'${_}'`)}) `);
                             };
                     }
