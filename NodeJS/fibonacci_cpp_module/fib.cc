@@ -1,4 +1,5 @@
 #include<vector>
+#include<memory>
 #include<gmpxx.h>
 #include<node/node.h>
 
@@ -8,8 +9,7 @@ namespace fib{
 	using namespace v8;
 
 	mpz_class fib(vector<mpz_class>::size_type n){
-		auto arr = new vector<mpz_class>(n+1,0);
-		arr->operator[](0) = 0;
+		auto arr = unique_ptr<vector<mpz_class>*>(new vector<mpz_class>(n+1,0));
 		arr->operator[](1) = 1;
 		vector<mpz_class>::size_type pos = 2;
 		while(pos<=n){
@@ -22,8 +22,8 @@ namespace fib{
 	void getFib(const FunctionCallbackInfo<Value>& args){
 		Isolate* isolate = args.GetIsolate();
 		int argc = args.Length();
-		if(argc==1 && args[0]->IsNumber()){
-			auto  n = static_cast<long long>(args[0]->NumberValue());
+		if(argc>=1 && args[0]->IsNumber()){
+			auto  n = static_cast<vector<mpz_class>::size_type>(args[0]->NumberValue());
 			args.GetReturnValue().Set(String::NewFromUtf8(isolate,fib(n).get_str().c_str()));
 		}else{
 			args.GetReturnValue().Set(Number::New(isolate,0));
