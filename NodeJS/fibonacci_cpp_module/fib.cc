@@ -1,7 +1,5 @@
 #include<vector>
 #include<gmpxx.h>
-#include<iostream>
-#include<sstream>
 #include<node/node.h>
 
 
