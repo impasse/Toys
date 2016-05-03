@@ -33,9 +33,9 @@ function LRD(n) {
 }
 
 /*
-		A
+	A
       /   \
-	 B     C 
+     B     C 
     / \   /
    D   E F
 */
