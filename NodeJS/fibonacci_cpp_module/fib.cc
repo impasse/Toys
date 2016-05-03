@@ -9,7 +9,7 @@ namespace fib{
 	using namespace v8;
 
 	mpz_class fib(vector<mpz_class>::size_type n){
-		auto arr = unique_ptr<vector<mpz_class>*>(new vector<mpz_class>(n+1,0));
+		unique_ptr<vector<mpz_class>> arr(new vector<mpz_class>(n+1,0));
 		arr->operator[](1) = 1;
 		vector<mpz_class>::size_type pos = 2;
 		while(pos<=n){
