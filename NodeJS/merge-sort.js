@@ -7,7 +7,7 @@ function merge(left = [], right = []) {
 			result.push(right[r++]);
 		}
 	}
-	return result.concat(left.slice(l)).concat(right.slice(r));
+	return result.concat(left.slice(l),right.slice(r));
 }
 
 function sort(...arr) {
