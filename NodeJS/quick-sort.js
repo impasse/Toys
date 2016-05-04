@@ -1,4 +1,4 @@
-Array.prototype.partition = function (guard) {
+Array.prototype.partition = function (guard = true) {
   let a = [], b = [];
   for (let i of this) {
     if (guard(i)) {
