@@ -1,9 +1,22 @@
+Array.prototype.partition = function (guard) {
+  let a = [], b = [];
+  for (let i of this) {
+    if (guard(i)) {
+      a.push(i);
+    } else {
+      b.push(i);
+    }
+  }
+  return [a, b];
+}
+
 function qsort(...arr) {
   if (arr.length <= 1) {
     return arr;
   } else {
     let key = arr.shift();
-    return qsort(...arr.filter(_ => _ <= key)).concat([key]).concat(qsort(...arr.filter(_ => _ > key)));
+    let [lower, higher] = arr.partition(_ => _ <= key);
+    return qsort(...lower).concat([key], qsort(...higher));
   }
 }
 
