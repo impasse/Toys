@@ -32,6 +32,20 @@ function LRD(n) {
 	console.log(n.value);
 }
 
+function level(n) {
+	let queue = [n];
+	while (queue.length != 0) {
+		let n = queue.shift();
+		console.log(n.value);
+		if (n.left !== undefined) {
+			queue.push(n.left);
+		}
+		if (n.right !== undefined) {
+			queue.push(n.right);
+		}
+	}
+}
+
 /*
 	A
       /   \
@@ -50,3 +64,5 @@ console.log('----');
 LDR(n);
 console.log('----');
 LRD(n);
+console.log('----');
+level(n);
