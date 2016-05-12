@@ -10,14 +10,14 @@ public class QuickSort {
             int pivot = arr[start];
             int l = start,r=end;
             while(l<r){
-                while(l<r && arr[r]>pivot){
+                while(l<r && arr[r]>=pivot){
                     r--;
                 }
                 arr[l] = arr[r];
-                while (l<r && arr[l]<pivot){
+                while (l<r && arr[l]<=pivot){
                     l++;
                 }
-                arr[l] = arr[r];
+                arr[r] = arr[l];
             }
             arr[l] = pivot;
             qsort(arr,start,l-1);
