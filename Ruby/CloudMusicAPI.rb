@@ -1,6 +1,7 @@
 #!/usr/bin/ruby
 # -*- encoding: utf-8 -*-
 require 'net/http'
+require 'json'
 
 module CloudMusic
     # =CloudMusicAPI
@@ -30,7 +31,7 @@ module CloudMusic
 
         def call
             Net::HTTP.start 'music.163.com',80 do |c|
-                c.post(@url,fields,{'Referer'=>'http://music.163.com/','User-Agent'=>'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.152 Safari/537.36'}).body
+                JSON.parse c.post(@url,fields,{'Referer'=>'http://music.163.com/','User-Agent'=>'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.152 Safari/537.36'}).body
             end
         end
     end
