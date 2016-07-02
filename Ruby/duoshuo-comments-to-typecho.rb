@@ -54,9 +54,8 @@ open(ARGV[1]||'export.json') do |f|
     posts =  JSON.parse(f.read,symbolize_names:true)[:posts].map {|post| Post.new post }
     PostModel.all.map(&:destroy)
     top,tail = posts.partition{|post| post.father? }
-    top.map! do |post|
+    top.each do |post|
         post.coid = PostModel.create(**post.value).save.coid
-        post
     end
     tail.each do |post|
         f = top.find{|o| post.parent? o }
