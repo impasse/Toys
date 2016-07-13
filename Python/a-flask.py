@@ -2,12 +2,14 @@
 # -*- encoding: utf-8 -*-
 from __future__ import unicode_literals, print_function
 
+from abc import *
 from threading import local
 from wsgiref.simple_server import make_server
 
+from jinja2 import Template as Jinja2Template
 # from collections import UserDict
 from typing import *
-from functools import reduce
+from functools import reduce, wraps
 from cgi import *
 import mimetypes
 import re
@@ -37,10 +39,12 @@ class Request:
     """ GET/POST as params either """
     trusted_proxy = False
 
-    def __init__(self, env: Dict, ):
+    def __init__(self, env: Dict):
         self._env = env
         self._body = {}
         self._cookies = []
+        self._headers = {}
+        self._headers.update({k.lower()[5:]: v.lower() for k, v in env.items() if k.startswith('HTTP_')})
         self._fs = FieldStorage(environ=env, fp=env['wsgi.input'], keep_blank_values=1)
         for s in self._env.get('HTTP_COOKIE', ).split(';'):
             self._cookies.append(Cookie.parse(s.strip()))
@@ -51,9 +55,13 @@ class Request:
     @property
     def uri(self) -> Text:
         if self.query_string == '':
-            return self._env.get('PATH_INFO', '/')
+            return self._env.get('PATH_INFO')
         else:
-            return self._env.get('PATH_INFO', '/') + '?' + self.query_string
+            return self._env.get('PATH_INFO') + '?' + self.query_string
+
+    @property
+    def path(self) -> Text:
+        return self._env.get('PATH_INFO')
 
     @property
     def user_agent(self) -> Text:
@@ -93,11 +101,17 @@ class Request:
         return dict(self._fs)
 
     def param(self, name, default=None) -> Optional:
-        return self._fs.getvalue(name, default)
+        try:
+            return self._fs[name]
+        except KeyError:
+            return default
 
     @property
     def headers(self) -> List:
-        return self._fs.headers
+        return self._headers
+
+    def header(self, name, default=None) -> Optional:
+        return self._headers.get(name, default)
 
 
 class Cookie:
@@ -145,24 +159,36 @@ class Cookie:
 class Response:
     message = {
         200: 'OK',
-        403: 'Permission Denied',
+        301: 'Moved Permanently',
+        302: 'Found',
+        403: 'Forbidden',
         404: 'Not Found',
-        500: 'Server Error'
+        405: 'Method Not Allowed',
+        500: 'Internal Server Error'
     }
 
     def __init__(self, body, headers=None, code=200, cookies=[], encoding=sys.getdefaultencoding()):
         self.body = body
+        self.encoding = encoding
         if headers is not None:
-            self.headers = headers
+            self._headers = headers
         else:
-            self.headers = [('Content-Type', 'text/html; charset={}'.format(encoding))]
+            self._headers = [('Content-Type', 'text/html; charset={}'.format(encoding))]
         for c in cookies:
-            self.headers.append(('Set-Cookie', str(c)))
+            self._headers.append(('Set-Cookie', str(c)))
         self.code = code
 
+    def add_header(self, *args, **kwargs):
+        for t in args:
+            if isinstance(t, tuple):
+                self._headers.append(t)
+        self._headers.extend([(k, v) for k, v in kwargs.items()])
+
     def render(self, start_response) -> Iterable:
-        start_response('{} {}'.format(self.code, Response.message.get(self.code, 'Unknow')), self.headers)
-        return self.body
+        start_response('{} {}'.format(self.code, Response.message.get(self.code, 'Unknown')), self._headers)
+        return map(lambda s: s.encode(self.encoding), self.body)
+
+    __iter__ = render
 
 
 class Apply:
@@ -174,10 +200,12 @@ class Apply:
         return f(self.e, self.s)
 
 
-class Middleware:
+class Middleware(metaclass=ABCMeta):
+    @abstractmethod
     def __init__(self):
         pass
 
+    @abstractmethod
     def __call__(self, env, start_response) -> Callable:
         return lambda f: f(env, start_response)
 
@@ -199,7 +227,7 @@ class StatcFileMiddleware(Middleware):
 
             return openfile
         else:
-            return lambda f: f(env, start_response)
+            return super().__call__(env, start_response)
 
 
 class SessionMiddleware(Middleware):
@@ -225,14 +253,15 @@ class App:
         if path.endswith('/*'):
             path = path[0:-1] + '.*'
         path = re.sub(r'<\w+>', '([^/]+)', path)
-        return lambda handler: self._routes.append((re.compile(path), handler, [s.upper() for s in method]))
+
+        @wraps(self.route)
+        def _route(handle):
+            self._routes.append((re.compile(path), handle, [s.upper() for s in method]))
+
+        return _route
 
     def add_middleware(self, middleware):
         self._middlewares.append(middleware)
-
-    def bytes_value(func) -> Callable:
-        """ a decorator for map return value from str to bytes for python3 incompatible """
-        return lambda *args, **kwargs: map(lambda s: s.encode(), func(*args, **kwargs))
 
     def match(self, url) -> Optional:
         for pattern, handle, methods in self._routes:
@@ -266,18 +295,20 @@ class App:
 
         return render
 
-    @bytes_value
     def serve(self, env, start_response) -> Iterable:
-        App.set_request(Request(env))
+        try:
+            App.set_request(Request(env))
 
-        def this(env, start_response):
-            route, handle, params = self.match(env['PATH_INFO'])
-            if route is None:
-                return self.build_response(self.error_404)(start_response)
-            else:
-                return self.build_response(handle, params)(start_response)
+            def this(env, start_response):
+                route, handle, params = self.match(env['PATH_INFO'])
+                if route is None:
+                    return self.build_response(self.error_404)(start_response)
+                else:
+                    return self.build_response(handle, params)(start_response)
 
-        return reduce(lambda a, b: a(b), self._middlewares, Apply(env, start_response))(this)
+            return reduce(lambda a, b: a(b), self._middlewares, Apply(env, start_response))(this)
+        except Exception as e:
+            return Response('Exception: {}'.format(repr(e)), code=500).render(start_response)
 
     @staticmethod
     def get_request() -> Request:
@@ -290,8 +321,6 @@ class App:
     __call__ = serve
 
     def run(self, port=3000, host='0.0.0.0'):
-        if len(self._middlewares) == 0:
-            self._middlewares.append(Middleware())
         make_server(host, port, self.serve).serve_forever()
 
 
@@ -307,11 +336,10 @@ class Proxy:
 
 class Template:
     def __init__(self, folder='./templates/', engine='jinja2'):
-        self.engine = engine
+        self.engine = 'render_' + engine
         self.folder = folder
 
-    def render_jinjia2(self, filename, **kwargs) -> Response:
-        from jinja2 import Template as Jinja2Template
+    def render_jinja2(self, filename, **kwargs) -> Response:
         fullname = os.path.join(self.folder, filename)
         if os.path.isfile(fullname):
             with open(fullname) as f:
@@ -320,14 +348,15 @@ class Template:
             raise Exception('Template {} Not Exists', format(filename))
 
     def __call__(self, filename, **kwargs) -> Response:
-        if self.engine == 'jinja2':
-            return self.render_jinjia2(filename, **kwargs)
+        if hasattr(self, self.engine):
+            return getattr(self, self.engine)(filename, request=App.get_request(), **kwargs)
         else:
             raise Exception('None Template Engine Could Be Used')
 
 
 render_template = Template()
 request = Proxy(App.get_request)
+redirect_to = lambda path: Response('302 Temporarily Move', headers=[('Location', path)], code=302)
 
 # Example
 # ---------------------------------------------------------------------------------------
@@ -354,12 +383,15 @@ def index():
             <li>Your User-Agent is: {}</li>
             <li>Your Parameters is: {}</li>
         </ul>
-        <form method="POST" enctype="multipart/form-data">
+        <form method="POST" enctype="multipart/form-data" action="/param">
         <p>
-            <input type="text" name="field"/>
+            <input type="text" name="field1"/>
         </p>
         <p>
-            <input type="file" name="file" />
+            <input type="text" name="field2"/>
+        </p>
+        <p>
+            <input type="file" name="upload" />
         </p>
         <p>
             <input type="submit" value="submit"/>
@@ -370,9 +402,14 @@ def index():
     """.format(request.uri, request.ip, count, request.user_agent, request.params), cookies=[Cookie(count=count)])
 
 
-@app.route('/', method=['POST'])
-def index_post():
-    return render_template('index.html', title='My Flask')
+@app.route('/back')
+def back_home():
+    return redirect_to('/')
+
+
+@app.route('/<param>', method=['POST', 'GET'])
+def index_post(param):
+    return render_template('index.html', title='My Flask', param=param)
 
 
 if __name__ == '__main__':
