@@ -2,8 +2,8 @@
  
  EXPOSE 80
  
- RUN apt-get -y update
- RUN apt-get -y install git python python-pip
+ RUN apt-get -y update\
+   && apt-get -y install git python python-pip
  RUN pip install flask qcloud_cos github3.py
  
  COPY hook.py /srv/hook.py
