@@ -5,18 +5,33 @@ services:
   postgres:
     image: postgres
     environment:
-      - POSTGRES_PASSWORD=123
+      - POSTGRES_PASSWORD=123456
       - POSTGRES_USER=sentry
   sentry:
     image: sentry
     environment:
-      - SENTRY_SECRET_KEY=123
+      - SENTRY_SECRET_KEY=cf793742-56fd-11e7-81d4-c5907fce8a47
       - SENTRY_REDIS_HOST=redis
       - SENTRY_POSTGRES_HOST=postgres
       - SENTRY_DB_USER=sentry
-      - SENTRY_DB_PASSWORD=123
-    links:
-      - redis
-      - postgres
+      - SENTRY_DB_PASSWORD=123456
     ports:
       - 8080:9000
+  cron:
+    image: sentry
+    environment:
+      - SENTRY_SECRET_KEY=cf793742-56fd-11e7-81d4-c5907fce8a47
+      - SENTRY_REDIS_HOST=redis
+      - SENTRY_POSTGRES_HOST=postgres
+      - SENTRY_DB_USER=sentry
+      - SENTRY_DB_PASSWORD=123456
+    command: run cron
+  worker:
+    image: sentry
+    environment:
+      - SENTRY_SECRET_KEY=cf793742-56fd-11e7-81d4-c5907fce8a47
+      - SENTRY_REDIS_HOST=redis
+      - SENTRY_POSTGRES_HOST=postgres
+      - SENTRY_DB_USER=sentry
+      - SENTRY_DB_PASSWORD=123456
+    command: run cron
