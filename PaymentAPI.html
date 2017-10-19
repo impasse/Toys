@@ -1,0 +1,30 @@
+<html>
+    <head>
+        <title>Payment</title>
+        <script src="https://storage.googleapis.com/prshim/v1/payment-shim.js"></script>
+        <script>
+            window.onload = function () {
+                console.log('load');
+                setTimeout(() => {
+                    let req = new PaymentRequest(
+                        [{ supportedMethods: ['visa', 'unionpay']}],
+                        {
+                            displayItems: [{ label: 'S7 总决赛门票', amount: { currency: 'USD', value: '40.00'}}],
+                            total: {
+                                label: '总计',
+                                amount: { currency: 'USD', value: '40.00'},
+                            },
+                        }
+                    );
+                    req.show().then(res => {
+                        console.log(res);
+                        res.complete('success');
+                    })
+                    .catch(err => {
+                        console.error(err);
+                    })
+                }, 2000);
+            }
+        </script>
+    </head>
+</html>
