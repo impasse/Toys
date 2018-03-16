@@ -1,0 +1,7 @@
+FROM node:latest
+
+EXPOSE 5080 16984
+
+RUN npm install local-npm
+
+CMD ["./node_modules/.bin/local-npm"]
